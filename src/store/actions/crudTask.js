@@ -91,6 +91,8 @@ export const listTasks = () => {
             : inactive.push(doc.data())
         })
 
+        active.forEach(x => { x.running = false })
+
         dispatch({ type: 'SET_ACTIVE_TASKS', data: active })
         dispatch({ type: 'LIST_TASKS', data: inactive })
       })

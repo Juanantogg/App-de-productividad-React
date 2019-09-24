@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Card, Button, ButtonToolbar, Dropdown, SplitButton } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { deleteTask } from '../store/actions/crudTask'
-import { activeTask, deactiveTask, completeTask } from '../store/actions/activeTasks'
+import { activeTask, deactiveTask, completeTask, setIsRunningTasks } from '../store/actions/activeTasks'
 import { editTaskModal } from '../store/actions/toggleModal'
 
 class Task extends React.Component {
@@ -12,14 +12,40 @@ class Task extends React.Component {
     super(props)
     this.state = {
       task: props.task,
-      running: false,
       hours: props.task.duration.split(':')[0],
       minutes: props.task.duration.split(':')[1],
       seconds: props.task.duration.split(':')[2]
     }
+    this.runningTimer = false
     this.styleContainer = this.state.task.active ? 'p-0 mt-3 mb-3 col-12 bg-dark shadow' : 'p-3 col-12 col-lg-6'
     this.styleCard = this.state.task.active && 'bg-dark text-light'
     this.timer = null
+  }
+
+  // shouldComponentUpdate (nextP) {
+  //   if ((nextP.task.running !== this.props.task.running) || this.runningTimer) {
+  //     return true
+  //   } else {
+  //     return false
+  //   }
+  // }
+
+  componentDidUpdate (prevP) {
+    if (this.props.task.running && !this.runningTimer) {
+      this.setState({
+        task: { ...this.props.task }
+      })
+      this.runningTimer = true
+      this.startTimer()
+    }
+
+    if (!this.props.task.running && this.runningTimer) {
+      this.setState({
+        task: { ...this.props.task }
+      })
+      this.runningTimer = false
+      clearInterval(this.timer)
+    }
   }
 
   restartTask () {
@@ -33,11 +59,17 @@ class Task extends React.Component {
   setComplited () {
     const task = {
       ...this.state.task,
-      // created: this.state.task.created.created
-      created: this.state.task.created instanceof Date ? this.state.task.created : this.state.task.created.toDate()
+      created: this.state.task.created instanceof Date
+        ? this.state.task.created
+        : this.state.task.created.toDate()
     }
 
-    task.updated && (task.updated = this.state.task.updated instanceof Date ? this.state.task.updated : this.state.task.updated.toDate())
+    task.updated &&
+      (
+        task.updated = this.state.task.updated instanceof Date
+          ? this.state.task.updated
+          : this.state.task.updated.toDate()
+      )
     this.setIsRunning()
     this.setState({
       task: {
@@ -98,11 +130,9 @@ class Task extends React.Component {
   }
 
   setIsRunning () {
-    this.setState(() => ({
-      running: !this.state.running
-    }))
-
-    this.state.running ? clearInterval(this.timer) : this.startTimer()
+    const task = { ...this.state.task }
+    task.running = !this.state.task.running
+    this.props.setRunningInStore(task)
   }
 
   setSectionTime (section, time) {
@@ -142,6 +172,7 @@ class Task extends React.Component {
           }
         }
       }
+      // console.log(`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`)
     }, 1000)
   }
 
@@ -155,7 +186,7 @@ class Task extends React.Component {
                 <h2 className='mb-1'>{this.state.task.name}</h2>
                 {
                   (
-                    this.state.running ||
+                    this.state.task.running ||
                     this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`
                   )
                     ? <small style={{ fontSize: '12px' }}>{this.state.task.duration}</small>
@@ -178,7 +209,7 @@ class Task extends React.Component {
                   {/* Iniciar/pausar tarea */}
                   <Button variant='outline-primary' className='rounded-circle' onClick={() => this.setIsRunning()}>
                     {
-                      this.state.running
+                      this.state.task.running
                         ? <FontAwesomeIcon icon='pause' />
                         : <FontAwesomeIcon icon='play' />
                     }
@@ -207,7 +238,7 @@ class Task extends React.Component {
                     <ButtonToolbar>
                       <SplitButton
                         drop='left'
-                        variant='dark'
+                        variant={this.state.task.active ? 'dark' : 'light'}
                         title='Historial'
                       >
                         {
@@ -278,7 +309,8 @@ Task.propTypes = {
   editTask: PropTypes.func.isRequired,
   activeTaskInStore: PropTypes.func.isRequired,
   deactiveTaskInStore: PropTypes.func.isRequired,
-  completeTask: PropTypes.func.isRequired
+  completeTask: PropTypes.func.isRequired,
+  setRunningInStore: PropTypes.func.isRequired
 }
 
 const mapDispatchToProps = dispatch => {
@@ -287,7 +319,8 @@ const mapDispatchToProps = dispatch => {
     editTask: (id) => dispatch(editTaskModal(id)),
     activeTaskInStore: (id) => dispatch(activeTask(id)),
     deactiveTaskInStore: (id) => dispatch(deactiveTask(id)),
-    completeTask: (task) => dispatch(completeTask(task))
+    completeTask: (task) => dispatch(completeTask(task)),
+    setRunningInStore: (task) => dispatch(setIsRunningTasks(task))
   }
 }
 

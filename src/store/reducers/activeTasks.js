@@ -12,6 +12,12 @@ const activeTasks = (state = { data: [] }, action) => {
         data: action.data
       }
 
+    case 'SET_IS_RUNNING_TASKS':
+      return {
+        ...state,
+        data: action.data
+      }
+
     default:
       return state
   }

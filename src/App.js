@@ -45,7 +45,7 @@ class App extends React.Component {
 }
 
 const mapStateToProps = state => {
-  console.log('state', state)
+  // console.log('state', { ...state.activeTasks.data })
   return {
     tasks: state.tasks.data,
     activeTasks: state.activeTasks.data

@@ -38,7 +38,7 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
         duration: duration,
         active: false,
         complited: false,
-        runing: false,
+        running: false,
         created: new Date()
       }
 

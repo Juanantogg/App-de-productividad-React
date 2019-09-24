@@ -71,3 +71,21 @@ export const completeTask = (task) => {
       })
   }
 }
+
+export const setIsRunningTasks = (task) => {
+  return (dispatch, getState) => {
+    let tasks = getState().activeTasks.data
+    let running = null
+    let stopped = null
+
+    const index = tasks.findIndex(x => x.id === task.id)
+
+    tasks.splice(index, 1)
+    running = tasks.filter(x => x.running)
+    stopped = tasks.filter(x => !x.running)
+    task.running ? running.unshift(task) : stopped.unshift(task)
+    tasks = running.concat(stopped)
+
+    dispatch({ type: 'SET_IS_RUNNING_TASKS', data: tasks })
+  }
+}
