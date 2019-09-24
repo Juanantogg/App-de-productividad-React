@@ -1,7 +1,10 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import logo from '../logo.svg'
+import PropTypes from 'prop-types'
+import { connect } from 'react-redux'
 import { Navbar, Nav, NavDropdown, Form, FormControl } from 'react-bootstrap'
+
+import { showModalAction } from '../store/actions/toggleModal'
 
 const Header = ({ showModal }) => {
   const filter = 'Todas'
@@ -24,6 +27,8 @@ const Header = ({ showModal }) => {
           <Nav className='mr-auto'>
             <NavDropdown title={`Filtro: ${filter}`} id='basic-nav-dropdown'>
               <NavDropdown.Item>Todas</NavDropdown.Item>
+              <NavDropdown.Item>Activas</NavDropdown.Item>
+              <NavDropdown.Item>Inactivas</NavDropdown.Item>
               <NavDropdown.Item>Completadas</NavDropdown.Item>
               <NavDropdown.Item>Pedientes</NavDropdown.Item>
             </NavDropdown>
@@ -42,4 +47,13 @@ Header.propTypes = {
   showModal: PropTypes.func.isRequired
 }
 
-export default Header
+const mapDispatchToProps = dispatch => {
+  return {
+    showModal: () => dispatch(showModalAction())
+  }
+}
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(Header)
