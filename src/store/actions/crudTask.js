@@ -44,11 +44,12 @@ export const updateTask = (task) => {
       .doc(task.id)
       .update(task)
       .then(() => {
-        const data = [...getState().tasks.data]
+        const data = task.active ? [...getState().activeTasks.data] : [...getState().tasks.data]
         const index = data.findIndex(x => x.id === task.id)
 
         data[index] = task
-        dispatch({ type: 'UPDATED_TASK', data })
+
+        task.active ? dispatch({ type: 'SET_ACTIVE_TASKS', data }) : dispatch({ type: 'UPDATED_TASK', data })
         getState().modal.showModal && dispatch({ type: 'HIDE_MODAL' })
       })
       .catch(err => {
@@ -80,7 +81,7 @@ export const getTask = taskID => {
 export const listTasks = () => {
   return (dispatch, getState, { getFirestore }) => {
     getFirestore()
-      .get({ collection: 'tasks', orderBy: 'created' })
+      .get({ collection: 'tasks', orderBy: 'order' })
       .then(res => {
         const active = []
         const inactive = []

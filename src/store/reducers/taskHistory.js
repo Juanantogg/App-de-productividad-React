@@ -1,6 +1,6 @@
 const taskHistory = (state = { data: null }, action) => {
   switch (action.type) {
-    case 'value':
+    case 'ADD_HISTORY':
       return {
 
       }

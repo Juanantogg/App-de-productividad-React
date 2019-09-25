@@ -1,4 +1,5 @@
 import { updateTask } from './crudTask'
+import { addToHistory } from './taskHistory'
 
 // Setear tarea activa
 export const setActiveTasks = (tasks) => {
@@ -40,6 +41,7 @@ export const deactiveTask = (id) => {
     const task = activeTasks.splice(index, 1)[0]
     const tasks = getState().tasks.data
     task.active = false
+    task.completed = false
     tasks.push(task)
 
     // Agregar tarea inactiva a las tareas inactivas
@@ -56,19 +58,15 @@ export const deactiveTask = (id) => {
   }
 }
 
-export const completeTask = (task) => {
+export const completeTask = (data) => {
   return (dispatch, getState, { getFirestore }) => {
-    console.log(task)
-    getFirestore()
-      .collection('tasks')
-      .doc(task.id)
-      .update(task)
-      .then(() => {
-        const activeTasks = getState().activeTasks.data
-        const index = activeTasks.findIndex(x => x.id === task.id)
-        activeTasks[index] = task
-        dispatch({ type: 'SET_ACTIVE_TASK', data: activeTasks })
-      })
+    console.log(data.task)
+    const activeTasks = getState().activeTasks.data
+    const index = activeTasks.findIndex(x => x.id === data.task.id)
+    activeTasks[index] = data.task
+    dispatch({ type: 'SET_ACTIVE_TASK', data: activeTasks })
+    dispatch(updateTask({ ...data.task }))
+    dispatch(addToHistory(data.history))
   }
 }
 
@@ -87,5 +85,79 @@ export const setIsRunningTasks = (task) => {
     tasks = running.concat(stopped)
 
     dispatch({ type: 'SET_IS_RUNNING_TASKS', data: tasks })
+  }
+}
+
+const updateTasks = (dispatch, tasks) => {
+  console.log(tasks)
+  let count = 0
+  const interval = setInterval(() => {
+    dispatch(
+      updateTask({
+        ...tasks[count],
+        order: count + 1
+      })
+    )
+
+    count++
+
+    if (count > tasks.length - 1) {
+      clearInterval(interval)
+    }
+  }, 200)
+}
+
+export const reorder = (id, prevIndex, nextIndex, fromContainer, toContainer) => {
+  return (dispatch, getState) => {
+    let running = null
+    let stopped = null
+    let tasks = [...getState()[fromContainer].data]
+    const task = tasks.splice(prevIndex, 1)[0]
+
+    if (fromContainer === toContainer) {
+      if (fromContainer === 'tasks') {
+        tasks.splice(nextIndex, 0, task)
+        dispatch({ type: 'LIST_TASKS', data: tasks })
+      }
+
+      if (fromContainer === 'activeTasks') {
+        running = tasks.filter(x => x.running)
+        stopped = tasks.filter(x => !x.running)
+        nextIndex < running.length && running.push(task)
+        if (nextIndex >= running.length) {
+          nextIndex -= running.length
+          stopped.splice(nextIndex, 0, task)
+        }
+        tasks = running.concat(stopped)
+        dispatch({ type: 'SET_ACTIVE_TASKS', data: tasks })
+      }
+      updateTasks(dispatch, tasks)
+    } else {
+      fromContainer === 'tasks' && dispatch({ type: 'LIST_TASKS', data: tasks })
+      fromContainer === 'activeTasks' && dispatch({ type: 'SET_ACTIVE_TASKS', data: tasks })
+      updateTasks(dispatch, tasks)
+      tasks = [...getState()[toContainer].data]
+
+      if (toContainer === 'tasks') {
+        task.active = false
+        tasks.splice(nextIndex, 0, task)
+        dispatch({ type: 'LIST_TASKS', data: tasks })
+      }
+
+      if (toContainer === 'activeTasks') {
+        task.active = true
+        running = tasks.filter(x => x.running)
+        stopped = tasks.filter(x => !x.running)
+        nextIndex < running.length && running.push(task)
+        if (nextIndex >= running.length) {
+          nextIndex -= running.length
+          console.log(nextIndex)
+          stopped.splice(nextIndex, 0, task)
+        }
+        tasks = running.concat(stopped)
+        dispatch({ type: 'SET_ACTIVE_TASKS', data: tasks })
+      }
+      updateTasks(dispatch, tasks)
+    }
   }
 }

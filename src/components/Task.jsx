@@ -3,9 +3,11 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Card, Button, ButtonToolbar, Dropdown, SplitButton } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { deleteTask } from '../store/actions/crudTask'
+import { deleteTask, updateTask } from '../store/actions/crudTask'
 import { activeTask, deactiveTask, completeTask, setIsRunningTasks } from '../store/actions/activeTasks'
 import { editTaskModal } from '../store/actions/toggleModal'
+import firebase from 'firebase/app'
+import 'firebase/firestore'
 
 class Task extends React.Component {
   constructor (props) {
@@ -16,21 +18,60 @@ class Task extends React.Component {
       minutes: props.task.duration.split(':')[1],
       seconds: props.task.duration.split(':')[2]
     }
+    if (this.state.task.completed) {
+      this.state.hours = this.props.task.history[0].time.split(':')[0]
+      this.state.minutes = this.props.task.history[0].time.split(':')[1]
+      this.state.seconds = this.props.task.history[0].time.split(':')[2]
+    }
     this.runningTimer = false
-    this.styleContainer = this.state.task.active ? 'p-0 mt-3 mb-3 col-12 bg-dark shadow' : 'p-3 col-12 col-lg-6'
+    // this.styleContainer = this.state.task.active ? 'p-0 mt-3 mb-3 col-12 bg-dark shadow' : 'p-3 col-12 col-lg-6'
     this.styleCard = this.state.task.active && 'bg-dark text-light'
+    this.styleDuration = this.state.task.active && this.state.task.completed
+      ? `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` === this.state.task.duration
+        ? 'mb-2 mb-3 text-danger'
+        : 'mb-2 mb-3 text-success'
+      : 'mb-2 mb-3 text-light'
     this.timer = null
   }
 
-  // shouldComponentUpdate (nextP) {
-  //   if ((nextP.task.running !== this.props.task.running) || this.runningTimer) {
-  //     return true
-  //   } else {
-  //     return false
-  //   }
-  // }
+  componentDidUpdate (prevP, prevS) {
+    // Mostrar tiempo de ultima ejecución en lugar del tiempo de la tarea
+    if (this.props.task.completed && !this.state.task.completed) {
+      console.log(1)
+      console.log('this.props.task', this.props.task)
+      this.setState({
+        task: { ...this.props.task },
+        hours: this.props.task.history[0].time.split(':')[0],
+        minutes: this.props.task.history[0].time.split(':')[1],
+        seconds: this.props.task.history[0].time.split(':')[2]
+      })
+      this.styleDuration = `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` === this.state.task.duration
+        ? 'mb-2 mb-3 text-danger'
+        : 'mb-2 mb-3 text-success'
+    }
 
-  componentDidUpdate (prevP) {
+    // Resetear temporizadir cuando la tarea esta completada
+    if (!this.props.task.completed && this.state.task.completed) {
+      this.setState({
+        task: { ...this.props.task },
+        hours: this.props.task.duration.split(':')[0],
+        minutes: this.props.task.duration.split(':')[1],
+        seconds: this.props.task.duration.split(':')[2]
+      })
+      this.styleDuration = 'mb-2 mb-3 text-light'
+    }
+
+    // Actualizar tarea cuando se edita su información
+    if (this.props.task.duration !== this.state.task.duration) {
+      this.setState({
+        task: { ...this.props.task },
+        hours: this.props.task.duration.split(':')[0],
+        minutes: this.props.task.duration.split(':')[1],
+        seconds: this.props.task.duration.split(':')[2]
+      })
+    }
+
+    // Iniciar temporizador de la tarea
     if (this.props.task.running && !this.runningTimer) {
       this.setState({
         task: { ...this.props.task }
@@ -39,6 +80,7 @@ class Task extends React.Component {
       this.startTimer()
     }
 
+    // Pausar temporizador de la tarea
     if (!this.props.task.running && this.runningTimer) {
       this.setState({
         task: { ...this.props.task }
@@ -49,19 +91,25 @@ class Task extends React.Component {
   }
 
   restartTask () {
-    this.setState({
-      hours: this.state.task.duration.split(':')[0],
-      minutes: this.state.task.duration.split(':')[1],
-      seconds: this.state.task.duration.split(':')[2]
+    this.props.updateTask({
+      ...this.state.task,
+      completed: false
     })
   }
 
-  setComplited () {
+  setCompleted () {
     const task = {
       ...this.state.task,
+      completed: true,
+      running: false,
       created: this.state.task.created instanceof Date
         ? this.state.task.created
         : this.state.task.created.toDate()
+    }
+    const history = {
+      time: `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`,
+      date: new Date(),
+      task_id: firebase.firestore().collection('tasks').doc(this.state.task.id)
     }
 
     task.updated &&
@@ -71,12 +119,6 @@ class Task extends React.Component {
           : this.state.task.updated.toDate()
       )
     this.setIsRunning()
-    this.setState({
-      task: {
-        ...task,
-        running: false
-      }
-    })
 
     if (task.history && task.history.length) {
       task.history.unshift({
@@ -89,7 +131,7 @@ class Task extends React.Component {
         time: this.setExecutionTime()
       }]
     }
-    this.props.completeTask(task)
+    this.props.completeTask({ task, history })
   }
 
   setExecutionTime () {
@@ -105,9 +147,9 @@ class Task extends React.Component {
     startSeconds === '00' ? startSeconds = 60 : Number(startSeconds)
 
     countSeconds = startSeconds - endSeconds
+    startMinutes === 60 && startHours--
     startSeconds === 60 && startMinutes--
     countMinutes = startMinutes - endMinutes
-    startMinutes === 60 && startHours--
     countHours = startHours - endHours
 
     if (countSeconds === 60) {
@@ -168,7 +210,7 @@ class Task extends React.Component {
             this.setSectionTime('seconds', '59')
           } else {
             clearInterval(this.timer)
-            this.setComplited()
+            this.setCompleted()
           }
         }
       }
@@ -177,8 +219,15 @@ class Task extends React.Component {
   }
 
   render () {
+    // window.addEventListener('beforeunload', (e) => {
+    //   console.log(e)
+    //   var confirmationMessage = '\o/';
+
+    //   (e || window.event).returnValue = confirmationMessage // Gecko + IE
+    //   return confirmationMessage
+    // })
     return (
-      <div className={this.styleContainer}>
+      <div>
         <Card className={this.styleCard}>
           <Card.Body>
             <Card.Title className='m-0 d-flex flex-wrap justify-content-between align-items-start'>
@@ -199,15 +248,20 @@ class Task extends React.Component {
                   {/* Marcar tarea como completada */}
                   <Button
                     className='rounded-circle'
-                    disabled={this.state.task.duration === `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}
-                    onClick={() => this.setComplited()}
+                    disabled={this.state.task.duration === `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` || this.state.task.completed}
+                    onClick={() => this.setCompleted()}
                     variant='outline-success'
                   >
                     <FontAwesomeIcon icon='check' />
                   </Button>
 
                   {/* Iniciar/pausar tarea */}
-                  <Button variant='outline-primary' className='rounded-circle' onClick={() => this.setIsRunning()}>
+                  <Button
+                    className='rounded-circle'
+                    disabled={this.state.task.completed}
+                    onClick={() => this.setIsRunning()}
+                    variant='outline-primary'
+                  >
                     {
                       this.state.task.running
                         ? <FontAwesomeIcon icon='pause' />
@@ -218,7 +272,7 @@ class Task extends React.Component {
                   {/* Reiciar tarea */}
                   <Button
                     className='rounded-circle'
-                    disabled={this.state.task.duration === `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}
+                    disabled={this.state.task.duration === `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` && !this.state.task.completed}
                     onClick={() => this.restartTask()}
                     variant='outline-danger'
                   >
@@ -230,7 +284,7 @@ class Task extends React.Component {
               <div className='mt-2 mb-3'>
                 {
                   this.state.task.active
-                    ? <h3 className='mt-2 mb-3'>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</h3>
+                    ? <h3 className={this.styleDuration}>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</h3>
                     : <small>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</small>
                 }
                 {
@@ -261,7 +315,7 @@ class Task extends React.Component {
                 ? (
               // Iniciar tarea
                   <Button
-                    disabled={this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}
+                    disabled={this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` && !this.state.task.completed}
                     onClick={() => this.props.deactiveTaskInStore(this.state.task.id)}
                     variant='success'
                   >
@@ -310,6 +364,7 @@ Task.propTypes = {
   activeTaskInStore: PropTypes.func.isRequired,
   deactiveTaskInStore: PropTypes.func.isRequired,
   completeTask: PropTypes.func.isRequired,
+  updateTask: PropTypes.func.isRequired,
   setRunningInStore: PropTypes.func.isRequired
 }
 
@@ -319,7 +374,8 @@ const mapDispatchToProps = dispatch => {
     editTask: (id) => dispatch(editTaskModal(id)),
     activeTaskInStore: (id) => dispatch(activeTask(id)),
     deactiveTaskInStore: (id) => dispatch(deactiveTask(id)),
-    completeTask: (task) => dispatch(completeTask(task)),
+    completeTask: (data) => dispatch(completeTask(data)),
+    updateTask: (task) => dispatch(updateTask(task)),
     setRunningInStore: (task) => dispatch(setIsRunningTasks(task))
   }
 }

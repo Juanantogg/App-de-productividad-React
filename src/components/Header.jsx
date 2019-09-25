@@ -5,9 +5,63 @@ import { connect } from 'react-redux'
 import { Navbar, Nav, NavDropdown, Form, FormControl } from 'react-bootstrap'
 
 import { showModalAction } from '../store/actions/toggleModal'
+import { createTask } from '../store/actions/crudTask'
 
-const Header = ({ showModal }) => {
+const Header = ({ showModal, createTask }) => {
   const filter = 'Todas'
+
+  const fillTasksList = () => {
+    let count = 1
+    const interval = setInterval(() => {
+      const newTask = {
+        name: `Tarea-${count}`,
+        description: `Descripción de tarea-${count}`,
+        duration: setRandomTime(),
+        active: false,
+        order: 0,
+        completed: false,
+        running: false,
+        created: new Date()
+      }
+
+      createTask(newTask)
+
+      count++
+
+      if (count > 50) {
+        clearInterval(interval)
+      }
+    }, 200)
+  }
+
+  const setRandomTime = () => {
+    let randomH = 0
+    let randomM = 0
+    let randomS = 0
+    let time = ''
+
+    do {
+      randomH = Math.floor(Math.random() * 2)
+    } while (randomH > 2)
+
+    do {
+      randomM = Math.floor(Math.random() * 60)
+    } while (randomM > 60)
+
+    do {
+      randomS = Math.floor(Math.random() * 60)
+    } while (randomS > 60)
+
+    time = `${
+      randomH.toString().length < 2 ? `0${randomH}` : randomH
+    }:${
+      randomM.toString().length < 2 ? `0${randomM}` : randomM
+    }:${
+      randomS.toString().length < 2 ? `0${randomS}` : randomS
+    }`
+
+    return time
+  }
 
   return (
     <header>
@@ -25,6 +79,10 @@ const Header = ({ showModal }) => {
         <Navbar.Toggle aria-controls='basic-navbar-nav' />
         <Navbar.Collapse id='basic-navbar-nav'>
           <Nav className='mr-auto'>
+            <Nav.Link onClick={showModal}>Nueva</Nav.Link>
+            <Nav.Link onClick={fillTasksList}>Llenar</Nav.Link>
+            <Nav.Link onClick={showModal}>Ordenar</Nav.Link>
+            <Nav.Link onClick={showModal}>Gráfica</Nav.Link>
             <NavDropdown title={`Filtro: ${filter}`} id='basic-nav-dropdown'>
               <NavDropdown.Item>Todas</NavDropdown.Item>
               <NavDropdown.Item>Activas</NavDropdown.Item>
@@ -32,7 +90,6 @@ const Header = ({ showModal }) => {
               <NavDropdown.Item>Completadas</NavDropdown.Item>
               <NavDropdown.Item>Pedientes</NavDropdown.Item>
             </NavDropdown>
-            <Nav.Link onClick={showModal}>Nueva tarea</Nav.Link>
           </Nav>
           <Form inline>
             <FormControl type='text' placeholder='Buscar' className='mr-sm-2' />
@@ -44,12 +101,14 @@ const Header = ({ showModal }) => {
 }
 
 Header.propTypes = {
-  showModal: PropTypes.func.isRequired
+  showModal: PropTypes.func.isRequired,
+  createTask: PropTypes.func.isRequired
 }
 
 const mapDispatchToProps = dispatch => {
   return {
-    showModal: () => dispatch(showModalAction())
+    showModal: () => dispatch(showModalAction()),
+    createTask: (task) => dispatch(createTask(task))
   }
 }
 

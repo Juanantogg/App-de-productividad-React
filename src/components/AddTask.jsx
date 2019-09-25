@@ -36,13 +36,18 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
         name: taskName,
         description: taskDescription,
         duration: duration,
+        order: 0,
         active: false,
-        complited: false,
+        completed: false,
         running: false,
         created: new Date()
       }
 
       createTask(newTask)
+      setTaskName('')
+      setTaskDescription('')
+      setIsStandard(true)
+      setDuration('00:30:00')
     }
   }
 
@@ -58,6 +63,10 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
       }
 
       update(task)
+      setTaskName('')
+      setTaskDescription('')
+      setIsStandard(true)
+      setDuration('00:30:00')
     }
   }
 
@@ -75,6 +84,7 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
     } else {
       setTaskName('')
       setTaskDescription('')
+      setIsStandard(true)
       setDuration('00:30:00')
     }
   }, [taskToUpdate, id, getTaskToUpdate])
