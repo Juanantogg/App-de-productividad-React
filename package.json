@@ -14,12 +14,13 @@
     "react-dom": "^16.9.0",
     "react-redux": "^7.1.1",
     "react-redux-firebase": "^2.4.1",
-    "react-router-dom": "^5.0.1",
+    "react-router-dom": "^5.1.0",
     "react-scripts": "3.1.2",
     "redux": "^4.0.4",
     "redux-firestore": "^0.9.0",
     "redux-thunk": "^2.3.0",
-    "uuid": "^3.3.3"
+    "uuid": "^3.3.3",
+    "victory": "^33.1.0"
   },
   "scripts": {
     "start": "BROWSER=none react-scripts start",
@@ -41,8 +42,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "__comment": {
-    "homepage": "http://localhost:5000/"
   }
 }

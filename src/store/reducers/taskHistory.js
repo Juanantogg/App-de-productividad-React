@@ -1,8 +1,9 @@
-const taskHistory = (state = { data: null }, action) => {
+const taskHistory = (state = { data: [] }, action) => {
   switch (action.type) {
-    case 'ADD_HISTORY':
+    case 'SET_TASK_HISTORY':
       return {
-
+        ...state,
+        data: action.data
       }
 
     default:

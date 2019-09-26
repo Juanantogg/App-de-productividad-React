@@ -110,7 +110,6 @@ export const addToHistory = data => {
         { collection: 'tasks' },
         { ...data }
       ).then(res => {
-        console.log(res)
       })
   }
 }

@@ -1,0 +1,18 @@
+.active-task {
+  border: 2px dashed rgba(33, 136, 56, .5);
+  background-color: rgba(33, 136, 56, .2);
+  color: rgba(33, 136, 56, .3);
+  min-height: 100px;
+}
+
+.inactive-task {
+  border: 2px dashed rgba(0, 105, 217, .5);
+  background-color: rgba(0, 105, 217, .2);
+  color: rgba(0, 105, 217, .2);
+  min-height: 100px;
+}
+
+#root > div > div > div > div > div > div > svg,
+#root > div > div > div > div > div > div > svg ~ div {
+  height: 100% !important;
+}

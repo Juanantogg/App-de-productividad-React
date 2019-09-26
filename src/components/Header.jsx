@@ -3,7 +3,7 @@ import logo from '../logo.svg'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Navbar, Nav, NavDropdown, Form, FormControl } from 'react-bootstrap'
-
+import { Link } from 'react-router-dom'
 import { showModalAction } from '../store/actions/toggleModal'
 import { createTask } from '../store/actions/crudTask'
 
@@ -65,24 +65,27 @@ const Header = ({ showModal, createTask }) => {
 
   return (
     <header>
-      <Navbar bg='dark' variant='dark' expand='lg'>
-        <Navbar.Brand>
-          <img
-            alt='React Logo'
-            src={logo}
-            width='30'
-            height='30'
-            className='d-inline-block align-top mr-2'
-          />
+      <Navbar bg='dark' variant='dark' expand='xl'>
+        <Link className='nav-link p-0' to='/tasks'>
+          <Navbar.Brand>
+            <img
+              alt='React Logo'
+              src={logo}
+              width='30'
+              height='30'
+              className='d-inline-block align-top mr-2'
+            />
           App de productividad
-        </Navbar.Brand>
+          </Navbar.Brand>
+        </Link>
         <Navbar.Toggle aria-controls='basic-navbar-nav' />
         <Navbar.Collapse id='basic-navbar-nav'>
           <Nav className='mr-auto'>
-            <Nav.Link onClick={showModal}>Nueva</Nav.Link>
-            <Nav.Link onClick={fillTasksList}>Llenar</Nav.Link>
-            <Nav.Link onClick={showModal}>Ordenar</Nav.Link>
-            <Nav.Link onClick={showModal}>Gráfica</Nav.Link>
+            <Link className='nav-link' to='/tasks'> Inicio </Link>
+            <Link className='nav-link' to='/history'> Historial </Link>
+            <Nav.Link onClick={showModal}> Nueva </Nav.Link>
+            <Nav.Link onClick={fillTasksList}>Llenar Tareas</Nav.Link>
+            <Nav.Link onClick={fillTasksList}>Llenar Hstorial</Nav.Link>
             <NavDropdown title={`Filtro: ${filter}`} id='basic-nav-dropdown'>
               <NavDropdown.Item>Todas</NavDropdown.Item>
               <NavDropdown.Item>Activas</NavDropdown.Item>

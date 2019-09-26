@@ -11,6 +11,13 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
   const [isStandard, setIsStandard] = useState(true)
   const [duration, setDuration] = useState('00:30:00')
 
+  const resetState = () => {
+    setTaskName('')
+    setTaskDescription('')
+    setIsStandard(true)
+    setDuration('00:30:00')
+  }
+
   const changeDuration = ({ target: { value } }) => {
     let [hours, minutes, seconds] = value.split(':')
 
@@ -44,10 +51,7 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
       }
 
       createTask(newTask)
-      setTaskName('')
-      setTaskDescription('')
-      setIsStandard(true)
-      setDuration('00:30:00')
+      setTimeout(() => resetState(), 1000)
     }
   }
 
@@ -63,10 +67,7 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
       }
 
       update(task)
-      setTaskName('')
-      setTaskDescription('')
-      setIsStandard(true)
-      setDuration('00:30:00')
+      setTimeout(() => resetState(), 1000)
     }
   }
 
@@ -82,10 +83,7 @@ const AddTask = ({ createTask, hideModal, show, id, getTaskToUpdate, taskToUpdat
       setTaskDescription(description)
       setDuration(duration)
     } else {
-      setTaskName('')
-      setTaskDescription('')
-      setIsStandard(true)
-      setDuration('00:30:00')
+      resetState()
     }
   }, [taskToUpdate, id, getTaskToUpdate])
 

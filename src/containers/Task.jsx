@@ -18,57 +18,41 @@ class Task extends React.Component {
       minutes: props.task.duration.split(':')[1],
       seconds: props.task.duration.split(':')[2]
     }
-    if (this.state.task.completed) {
-      this.state.hours = this.props.task.history[0].time.split(':')[0]
-      this.state.minutes = this.props.task.history[0].time.split(':')[1]
-      this.state.seconds = this.props.task.history[0].time.split(':')[2]
-    }
+
     this.runningTimer = false
-    // this.styleContainer = this.state.task.active ? 'p-0 mt-3 mb-3 col-12 bg-dark shadow' : 'p-3 col-12 col-lg-6'
-    this.styleCard = this.state.task.active && 'bg-dark text-light'
-    this.styleDuration = this.state.task.active && this.state.task.completed
-      ? `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` === this.state.task.duration
-        ? 'mb-2 mb-3 text-danger'
-        : 'mb-2 mb-3 text-success'
-      : 'mb-2 mb-3 text-light'
+    this.styleCard = this.state.task.active ? 'bg-dark text-light' : 'text-dark'
     this.timer = null
   }
 
-  componentDidUpdate (prevP, prevS) {
-    // Mostrar tiempo de ultima ejecución en lugar del tiempo de la tarea
-    if (this.props.task.completed && !this.state.task.completed) {
-      console.log(1)
-      console.log('this.props.task', this.props.task)
-      this.setState({
-        task: { ...this.props.task },
-        hours: this.props.task.history[0].time.split(':')[0],
-        minutes: this.props.task.history[0].time.split(':')[1],
-        seconds: this.props.task.history[0].time.split(':')[2]
-      })
-      this.styleDuration = `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` === this.state.task.duration
-        ? 'mb-2 mb-3 text-danger'
-        : 'mb-2 mb-3 text-success'
+  componentDidMount () {
+    if (this.state.task.active) {
+      const inStorage = JSON.parse(window.localStorage.getItem(`${this.state.task.id}`))
+      if (inStorage) {
+        window.localStorage.removeItem(`${this.state.task.id}`)
+        this.setState({
+          hours: inStorage.runningTime.split(':')[0],
+          minutes: inStorage.runningTime.split(':')[1],
+          seconds: inStorage.runningTime.split(':')[2]
+        })
+      }
     }
+  }
 
+  componentDidUpdate (prevP, prevS) {
     // Resetear temporizadir cuando la tarea esta completada
     if (!this.props.task.completed && this.state.task.completed) {
-      this.setState({
-        task: { ...this.props.task },
-        hours: this.props.task.duration.split(':')[0],
-        minutes: this.props.task.duration.split(':')[1],
-        seconds: this.props.task.duration.split(':')[2]
-      })
-      this.styleDuration = 'mb-2 mb-3 text-light'
+      this.resetState()
+    }
+    if (this.props.task.completed && !this.state.task.completed) {
+      this.resetState()
     }
 
     // Actualizar tarea cuando se edita su información
-    if (this.props.task.duration !== this.state.task.duration) {
-      this.setState({
-        task: { ...this.props.task },
-        hours: this.props.task.duration.split(':')[0],
-        minutes: this.props.task.duration.split(':')[1],
-        seconds: this.props.task.duration.split(':')[2]
-      })
+    if (this.props.task.duration !== this.state.task.duration ||
+      this.props.task.name !== this.state.task.name ||
+      this.props.task.description !== this.state.task.description
+    ) {
+      this.resetState()
     }
 
     // Iniciar temporizador de la tarea
@@ -90,6 +74,15 @@ class Task extends React.Component {
     }
   }
 
+  resetState () {
+    this.setState({
+      task: { ...this.props.task },
+      hours: this.props.task.duration.split(':')[0],
+      minutes: this.props.task.duration.split(':')[1],
+      seconds: this.props.task.duration.split(':')[2]
+    })
+  }
+
   restartTask () {
     this.props.updateTask({
       ...this.state.task,
@@ -98,6 +91,7 @@ class Task extends React.Component {
   }
 
   setCompleted () {
+    const finished = this.setExecutionTime()
     const task = {
       ...this.state.task,
       completed: true,
@@ -107,7 +101,9 @@ class Task extends React.Component {
         : this.state.task.created.toDate()
     }
     const history = {
-      time: `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`,
+      taskName: this.state.task.name,
+      taskTime: this.state.task.duration,
+      finished,
       date: new Date(),
       task_id: firebase.firestore().collection('tasks').doc(this.state.task.id)
     }
@@ -123,12 +119,12 @@ class Task extends React.Component {
     if (task.history && task.history.length) {
       task.history.unshift({
         date: new Date(),
-        time: this.setExecutionTime()
+        time: finished
       })
     } else {
       task.history = [{
         date: new Date(),
-        time: this.setExecutionTime()
+        time: finished
       }]
     }
     this.props.completeTask({ task, history })
@@ -142,9 +138,21 @@ class Task extends React.Component {
     const endMinutes = Number(this.state.minutes)
     const endSeconds = Number(this.state.seconds)
 
-    startHours = Number(startHours)
     startMinutes === '00' ? startMinutes = 60 : Number(startMinutes)
     startSeconds === '00' ? startSeconds = 60 : Number(startSeconds)
+    startHours = Number(startHours)
+    startMinutes = Number(startMinutes)
+    startSeconds = Number(startSeconds)
+
+    if (startSeconds < endSeconds) {
+      startSeconds += 60
+      startMinutes--
+    }
+
+    if (startMinutes < endMinutes) {
+      startMinutes += 60
+      startHours--
+    }
 
     countSeconds = startSeconds - endSeconds
     startMinutes === 60 && startHours--
@@ -215,17 +223,20 @@ class Task extends React.Component {
         }
       }
       // console.log(`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`)
-    }, 1000)
+    }, 1)
   }
 
   render () {
-    // window.addEventListener('beforeunload', (e) => {
-    //   console.log(e)
-    //   var confirmationMessage = '\o/';
+    window.addEventListener('beforeunload', (e) => {
+      if (this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`) {
+        const task = {
+          id: this.state.task.id,
+          runningTime: `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`
+        }
+        window.localStorage.setItem(`${this.state.task.id}`, JSON.stringify(task))
+      }
+    })
 
-    //   (e || window.event).returnValue = confirmationMessage // Gecko + IE
-    //   return confirmationMessage
-    // })
     return (
       <div>
         <Card className={this.styleCard}>
@@ -235,11 +246,11 @@ class Task extends React.Component {
                 <h2 className='mb-1'>{this.state.task.name}</h2>
                 {
                   (
-                    this.state.task.running ||
+                    this.state.task.running || this.state.task.completed ||
                     this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`
                   )
-                    ? <small style={{ fontSize: '12px' }}>{this.state.task.duration}</small>
-                    : <small style={{ fontSize: '12px' }}>&nbsp;</small>
+                    ? <small>{this.state.task.duration}</small>
+                    : <small style={{ fontSize: '16px' }}>&nbsp;</small>
                 }
               </div>
 
@@ -283,8 +294,15 @@ class Task extends React.Component {
 
               <div className='mt-2 mb-3'>
                 {
+                  this.state.task.completed && <small>Completada en:</small>
+                }
+                {
                   this.state.task.active
-                    ? <h3 className={this.styleDuration}>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</h3>
+                    ? this.state.task.completed
+                      ? this.state.task.history[0].time === this.state.task.duration
+                        ? <h3 className='mb-2 mb-3 text-danger'>{this.state.task.history[0].time}</h3>
+                        : <h3 className='mb-2 mb-3 text-success'>{this.state.task.history[0].time}</h3>
+                      : <h3>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</h3>
                     : <small>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</small>
                 }
                 {
@@ -345,7 +363,7 @@ class Task extends React.Component {
             {/* Eliminar tarea */}
             <Button
               disabled={this.state.task.active}
-              onClick={() => deleteTask(this.state.task.id)}
+              onClick={() => this.props.deleteTask(this.state.task.id)}
               variant='danger'
             >
               Eliminar

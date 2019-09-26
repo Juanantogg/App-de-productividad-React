@@ -60,7 +60,6 @@ export const deactiveTask = (id) => {
 
 export const completeTask = (data) => {
   return (dispatch, getState, { getFirestore }) => {
-    console.log(data.task)
     const activeTasks = getState().activeTasks.data
     const index = activeTasks.findIndex(x => x.id === data.task.id)
     activeTasks[index] = data.task
@@ -84,27 +83,30 @@ export const setIsRunningTasks = (task) => {
     task.running ? running.unshift(task) : stopped.unshift(task)
     tasks = running.concat(stopped)
 
+    updateTasks(dispatch, tasks)
+
     dispatch({ type: 'SET_IS_RUNNING_TASKS', data: tasks })
   }
 }
 
 const updateTasks = (dispatch, tasks) => {
-  console.log(tasks)
-  let count = 0
-  const interval = setInterval(() => {
-    dispatch(
-      updateTask({
-        ...tasks[count],
-        order: count + 1
-      })
-    )
+  if (tasks.length) {
+    let count = 0
+    const interval = setInterval(() => {
+      dispatch(
+        updateTask({
+          ...tasks[count],
+          order: count + 1
+        })
+      )
 
-    count++
+      count++
 
-    if (count > tasks.length - 1) {
-      clearInterval(interval)
-    }
-  }, 200)
+      if (count > tasks.length - 1) {
+        clearInterval(interval)
+      }
+    }, 200)
+  }
 }
 
 export const reorder = (id, prevIndex, nextIndex, fromContainer, toContainer) => {
@@ -151,7 +153,6 @@ export const reorder = (id, prevIndex, nextIndex, fromContainer, toContainer) =>
         nextIndex < running.length && running.push(task)
         if (nextIndex >= running.length) {
           nextIndex -= running.length
-          console.log(nextIndex)
           stopped.splice(nextIndex, 0, task)
         }
         tasks = running.concat(stopped)
