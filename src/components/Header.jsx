@@ -1,14 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import logo from '../logo.svg'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { Navbar, Nav, NavDropdown, Form, FormControl } from 'react-bootstrap'
+import { Navbar, Nav, NavDropdown } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import { showModalAction } from '../store/actions/toggleModal'
 import { createTask } from '../store/actions/crudTask'
+import { setFilterTasks, setSearch } from '../store/actions/filter'
 
-const Header = ({ showModal, createTask }) => {
-  const filter = 'Todas'
+const Header = ({ showModal, createTask, setFilterTasks, setSearch }) => {
+  const [filter, setFilter] = useState('Todas')
+  const [path, setPath] = useState(window.location.pathname)
 
   const fillTasksList = () => {
     let count = 1
@@ -63,40 +65,61 @@ const Header = ({ showModal, createTask }) => {
     return time
   }
 
+  const filterTasks = (filterAction) => {
+    setFilter(filterAction)
+    setFilterTasks(filterAction)
+  }
+
   return (
     <header>
-      <Navbar bg='dark' variant='dark' expand='xl'>
-        <Link className='nav-link p-0' to='/tasks'>
+      <Navbar bg='dark' variant='dark' expand='lg' fixed='top'>
+        <Link className='nav-link p-0' to='/tasks' onClick={() => setPath('/tasks')}>
           <Navbar.Brand>
-            <img
-              alt='React Logo'
-              src={logo}
-              width='30'
-              height='30'
-              className='d-inline-block align-top mr-2'
-            />
+            <img alt='React Logo' src={logo} width='30' height='30' className='d-inline-block align-top mr-2' />
           App de productividad
           </Navbar.Brand>
         </Link>
         <Navbar.Toggle aria-controls='basic-navbar-nav' />
         <Navbar.Collapse id='basic-navbar-nav'>
           <Nav className='mr-auto'>
-            <Link className='nav-link' to='/tasks'> Inicio </Link>
-            <Link className='nav-link' to='/history'> Historial </Link>
-            <Nav.Link onClick={showModal}> Nueva </Nav.Link>
-            <Nav.Link onClick={fillTasksList}>Llenar Tareas</Nav.Link>
-            <Nav.Link onClick={fillTasksList}>Llenar Hstorial</Nav.Link>
-            <NavDropdown title={`Filtro: ${filter}`} id='basic-nav-dropdown'>
-              <NavDropdown.Item>Todas</NavDropdown.Item>
-              <NavDropdown.Item>Activas</NavDropdown.Item>
-              <NavDropdown.Item>Inactivas</NavDropdown.Item>
-              <NavDropdown.Item>Completadas</NavDropdown.Item>
-              <NavDropdown.Item>Pedientes</NavDropdown.Item>
-            </NavDropdown>
+            {/* {menuItems} */}
+            {
+              path === '/tasks' ? (
+                <>
+                  <Link className='nav-link' to='/history' onClick={() => setPath('/history')}> Historial </Link>
+                  <Nav.Link onClick={showModal}> Nueva Tarea </Nav.Link>
+                  <Nav.Link onClick={fillTasksList}>Llenar Tareas</Nav.Link>
+                  <NavDropdown title={`Filtro: ${filter}`} id='basic-nav-dropdown'>
+                    <NavDropdown.Item onClick={() => filterTasks('Todas')}>Todas</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => filterTasks('Activas')}>Activas</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => filterTasks('Inactivas')}>Inactivas</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => filterTasks('Completadas')}>Completadas</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => filterTasks('Pendientes')}>Pedientes</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => filterTasks('Ejecutandose')}>Ejecutandose</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => filterTasks('Pausadas')}>Pausadas</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => filterTasks('Menos de 30 min')}>Menos de 30 min</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => filterTasks('De 30 min a 1 hr')}>De 30 min a 1 hr</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => filterTasks('Más de 1 hr')}>Más de 1 hr</NavDropdown.Item>
+                  </NavDropdown>
+                </>
+              ) : (
+                <>
+                  <Link className='nav-link' to='/tasks' onClick={() => setPath('/tasks')}> Inicio </Link>
+                  <Nav.Link onClick={fillTasksList}>Llenar Hstorial</Nav.Link>
+                </>
+              )
+            }
           </Nav>
-          <Form inline>
-            <FormControl type='text' placeholder='Buscar' className='mr-sm-2' />
-          </Form>
+          {/* {
+            path === '/tasks' && (
+              <Form inline>
+                <FormControl type='text' placeholder='Busca una tarea' onKeyUp={(e) => setSearch(e.target.value)} className='mr-sm-2' />
+              </Form>
+            )
+          } */}
         </Navbar.Collapse>
       </Navbar>
     </header>
@@ -105,13 +128,17 @@ const Header = ({ showModal, createTask }) => {
 
 Header.propTypes = {
   showModal: PropTypes.func.isRequired,
-  createTask: PropTypes.func.isRequired
+  createTask: PropTypes.func.isRequired,
+  setFilterTasks: PropTypes.func.isRequired,
+  setSearch: PropTypes.func.isRequired
 }
 
 const mapDispatchToProps = dispatch => {
   return {
     showModal: () => dispatch(showModalAction()),
-    createTask: (task) => dispatch(createTask(task))
+    createTask: (task) => dispatch(createTask(task)),
+    setFilterTasks: (filter) => dispatch(setFilterTasks(filter)),
+    setSearch: (search) => dispatch(setSearch(search))
   }
 }
 

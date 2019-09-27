@@ -5,12 +5,10 @@ import { VictoryChart, VictoryGroup, VictoryBar, VictoryTheme } from 'victory'
 import { Table } from 'react-bootstrap'
 
 const TaskHistory = ({ history }) => {
-  const date = new Date().getDate() - 1
+  const date = new Date().getDate()
   const tasksForDate = []
   const tasksBefore = []
   const tasksAfter = []
-
-  console.log(history)
 
   if (history.length > 0) {
     for (let i = date; i > date - 7; i--) {
@@ -30,12 +28,29 @@ const TaskHistory = ({ history }) => {
         })
       }
     }
+    history.reverse()
+  }
+
+  const showDate = (date) => {
+    let formedDate = date.toDate().getDate().toString().length < 2
+      ? `0${date.toDate().getDate()}/`
+      : `${date.toDate().getDate()}/`
+
+    formedDate += date.toDate().getMonth().toString().length < 2
+      ? `0${date.toDate().getMonth()}/`
+      : `${date.toDate().getMonth()}/`
+
+    formedDate += date.toDate().getFullYear().toString().length < 2
+      ? `0${date.toDate().getFullYear()}`
+      : `${date.toDate().getFullYear()}`
+
+    return formedDate
   }
 
   return (
     <div className='container'>
       {
-        history.length && (
+        history.length ? (
           <>
             <div>
               <h3 className='w-100 text-center pt-4'>Gráfica de los últimos {tasksBefore.length} días</h3>
@@ -73,7 +88,7 @@ const TaskHistory = ({ history }) => {
 
             <h3 className='w-100 text-center pt-4'>Historial de tareas</h3>
             <div>
-              <Table striped bordered hover variant='dark' size='sm'>
+              <Table className='text-center' striped bordered hover variant='dark' size='sm'>
                 <thead>
                   <tr>
                     <th>Fecha</th>
@@ -86,10 +101,10 @@ const TaskHistory = ({ history }) => {
                   {
                     history.map((h, i) => (
                       <tr key={h.date.toDate().getTime()}>
-                        <td className='text-center'>{i}</td>
-                        <td className='text-center'>{h.taskName}</td>
-                        <td className='text-center'>{h.taskTime}</td>
-                        <td className='text-center'>{h.finished}</td>
+                        <td>{showDate(h.date)}</td>
+                        <td>{h.taskName}</td>
+                        <td>{h.taskTime}</td>
+                        <td>{h.finished}</td>
                       </tr>
                     ))
                   }
@@ -98,6 +113,7 @@ const TaskHistory = ({ history }) => {
             </div>
           </>
         )
+          : null
       }
     </div>
   )

@@ -27,11 +27,19 @@ class Tasks extends React.Component {
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
-                className='container active-task p-0 mt-2 mb-2 rounded-lg d-flex flex-wrap justify-content-center align-items-center'
+                className={
+                  this.props.filter === 'Menos de 30 min' || this.props.filter === 'De 30 min a 1 hr' ||
+                    this.props.filter === 'Más de 1 hr' || this.props.filter === '' ||
+                  this.props.filter === 'Activas' || this.props.filter === 'Completadas' ||
+                    this.props.filter === 'Pendientes' || this.props.filter === 'Ejecutandose' ||
+                    this.props.filter === 'Pausadas' || this.props.filter === 'Todas'
+                    ? 'container active-task p-0 pb-3 mt-2 mb-3 rounded-lg d-flex flex-wrap justify-content-center align-items-center'
+                    : 'container active-task p-0 pb-3 mt-2 mb-3 rounded-lg d-none flex-wrap justify-content-center align-items-center'
+                }
               >
                 {
                   this.props.activeTasks &&
-                    this.props.activeTasks.length
+                        this.props.activeTasks.length
                     ? this.props.activeTasks.map((task, index) => (
                       <Draggable
                         key={task.id}
@@ -45,7 +53,7 @@ class Tasks extends React.Component {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             key={task.id}
-                            className='p-3 col-12'
+                            className='col-12 p-0'
                           >
                             <Task task={task} />
                           </div>
@@ -64,46 +72,53 @@ class Tasks extends React.Component {
             )}
           </Droppable>
 
-          <Droppable droppableId='tasks'>
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                className='container inactive-task p-0 mt-2 mb-2 rounded-lg d-flex flex-wrap justify-content-center align-items-center'
-              >
-                {
-                  this.props.tasks &&
-                    this.props.tasks.length
-                    ? this.props.tasks.map((task, index) => (
-                      <Draggable
-                        className='w-100 h-100'
-                        key={task.id}
-                        draggableId={task.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
+          {
+            (this.props.filter === 'Menos de 30 min' || this.props.filter === 'De 30 min a 1 hr' ||
+              this.props.filter === 'Más de 1 hr' || this.props.filter === 'Inactivas' ||
+              this.props.filter === 'Todas' || this.props.filter === '') &&
+            (
+              <Droppable droppableId='tasks'>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    className='container inactive-task p-0 pb-3 mt-2 mb-3 rounded-lg d-flex flex-wrap justify-content-center align-items-center'
+                  >
+                    {
+                      this.props.tasks &&
+                        this.props.tasks.length
+                        ? this.props.tasks.map((task, index) => (
+                          <Draggable
+                            className='w-100 h-100'
                             key={task.id}
-                            className='p-3 col-12'
+                            draggableId={task.id}
+                            index={index}
                           >
-                            <Task task={task} />
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                key={task.id}
+                                className='col-12 p-0'
+                              >
+                                <Task task={task} />
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                        : (
+                          <div className='flex-wrap justify-content-center align-items-center'>
+                            <h3 className='text-center m-0'>Aún no tienes tareas activas</h3>
+                            <p className='text-center m-0'>Puedes arrastar una tarea aquí</p>
                           </div>
-                        )}
-                      </Draggable>
-                    ))
-                    : (
-                      <div className='flex-wrap justify-content-center align-items-center'>
-                        <h3 className='text-center m-0'>Aún no tienes tareas activas</h3>
-                        <p className='text-center m-0'>Puedes arrastar una tarea aquí</p>
-                      </div>
-                    )
-                }
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
+                        )
+                    }
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            )
+          }
         </DragDropContext>
       </div>
     )
@@ -119,7 +134,8 @@ Tasks.propTypes = {
 const mapStateToProps = state => {
   return {
     tasks: state.tasks.data,
-    activeTasks: state.activeTasks.data
+    activeTasks: state.activeTasks.data,
+    filter: state.filter.filter
   }
 }
 

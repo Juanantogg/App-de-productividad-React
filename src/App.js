@@ -22,7 +22,7 @@ class App extends React.Component {
 
   render () {
     return (
-      <div>
+      <div className='mt-5 pt-3'>
         <Router>
           <Header />
           <AddTask />

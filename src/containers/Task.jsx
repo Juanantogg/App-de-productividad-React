@@ -20,7 +20,6 @@ class Task extends React.Component {
     }
 
     this.runningTimer = false
-    this.styleCard = this.state.task.active ? 'bg-dark text-light' : 'text-dark'
     this.timer = null
   }
 
@@ -39,6 +38,9 @@ class Task extends React.Component {
   }
 
   componentDidUpdate (prevP, prevS) {
+    if (this.props.search !== prevP.search) {
+      console.log(this.state.task.name.includes(this.props.search))
+    }
     // Resetear temporizadir cuando la tarea esta completada
     if (!this.props.task.completed && this.state.task.completed) {
       this.resetState()
@@ -223,7 +225,28 @@ class Task extends React.Component {
         }
       }
       // console.log(`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`)
-    }, 1)
+    }, 1000)
+  }
+
+  filterByDuration () {
+    const hours = Number(this.state.task.duration.split(':')[0])
+    const minutes = Number(this.state.task.duration.split(':')[1])
+    const seconds = Number(this.state.task.duration.split(':')[2])
+
+    switch (this.props.filter) {
+      case 'Menos de 30 min':
+        return hours === 0 && minutes <= 30
+
+      case 'De 30 min a 1 hr':
+        return (hours === 0 && minutes >= 30 && minutes <= 59) ||
+          (hours === 1 && minutes === 0 && seconds === 0)
+
+      case 'Más de 1 hr':
+        return (hours >= 1 && minutes >= 0 && minutes <= 59)
+
+      default:
+        return false
+    }
   }
 
   render () {
@@ -238,8 +261,41 @@ class Task extends React.Component {
     })
 
     return (
-      <div>
-        <Card className={this.styleCard}>
+      <>
+        <Card className={
+          this.state.task.active
+            ? this.props.filter === 'Todas' || this.props.filter === 'Activas' || this.props.filter === ''
+              ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+              : this.props.filter === 'Completadas' && this.state.task.completed
+                ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                : this.props.filter === 'Pendientes' && !this.state.task.completed && (this.state.task.duration === `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`)
+                  ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                  : this.props.filter === 'Ejecutandose' && this.state.task.running
+                    ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                    : this.props.filter === 'Pausadas' && (this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`)
+                      ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                      : this.props.filter === 'Menos de 30 min' && this.filterByDuration()
+                        ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                        : this.props.filter === 'De 30 min a 1 hr' && this.filterByDuration()
+                          ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                          : this.props.filter === 'Más de 1 hr' && this.filterByDuration()
+                            ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                            : this.props.search && this.state.task.name.includes(this.props.search)
+                              ? 'bg-dark text-light m-0 mr-3 mt-3 ml-3'
+                              : 'd-none'
+            : this.props.filter === 'Todas' || this.props.filter === 'Inactivas' || this.props.filter === ''
+              ? 'text-dark m-0 mr-3 mt-3 ml-3'
+              : this.props.filter === 'Menos de 30 min' && this.filterByDuration()
+                ? 'text-dark m-0 mr-3 mt-3 ml-3'
+                : this.props.filter === 'De 30 min a 1 hr' && this.filterByDuration()
+                  ? 'text-dark m-0 mr-3 mt-3 ml-3'
+                  : this.props.filter === 'Más de 1 hr' && this.filterByDuration()
+                    ? 'text-dark m-0 mr-3 mt-3 ml-3'
+                    : this.props.search && this.state.task.name.includes(this.props.search)
+                      ? 'text-dark m-0 mr-3 mt-3 ml-3'
+                      : 'd-none'
+        }
+        >
           <Card.Body>
             <Card.Title className='m-0 d-flex flex-wrap justify-content-between align-items-start'>
               <div className='col-12 col-md-5 d-flex flex-column text-center'>
@@ -248,9 +304,8 @@ class Task extends React.Component {
                   (
                     this.state.task.running || this.state.task.completed ||
                     this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}`
-                  )
-                    ? <small>{this.state.task.duration}</small>
-                    : <small style={{ fontSize: '16px' }}>&nbsp;</small>
+                  ) &&
+                    <small>{this.state.task.duration}</small>
                 }
               </div>
 
@@ -292,9 +347,17 @@ class Task extends React.Component {
                 </ButtonToolbar>
               )}
 
-              <div className='mt-2 mb-3'>
+              <div className={this.state.task.active ? 'mt-2 mb-3' : 'mt-2 mb-3 w-100 text-center'}>
                 {
-                  this.state.task.completed && <small>Completada en:</small>
+                  this.state.task.completed && <small className='d-block text-center'>Completada en:</small>
+                }
+                {
+                  this.state.task.running && <small className='d-block text-center'>En ejecución:</small>
+                }
+                {
+                  !this.state.task.running &&
+                    this.state.task.duration !== `${this.state.hours}:${this.state.minutes}:${this.state.seconds}` &&
+                      <small className='d-block text-center'>En pausa:</small>
                 }
                 {
                   this.state.task.active
@@ -303,11 +366,11 @@ class Task extends React.Component {
                         ? <h3 className='mb-2 mb-3 text-danger'>{this.state.task.history[0].time}</h3>
                         : <h3 className='mb-2 mb-3 text-success'>{this.state.task.history[0].time}</h3>
                       : <h3>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</h3>
-                    : <small>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</small>
+                    : <h5 className='d-block text.center'>{`${this.state.hours}:${this.state.minutes}:${this.state.seconds}`}</h5>
                 }
                 {
                   this.state.task.history && this.state.task.history.length &&
-                    <ButtonToolbar>
+                    <ButtonToolbar className='d-flex justify-content-end'>
                       <SplitButton
                         drop='left'
                         variant={this.state.task.active ? 'dark' : 'light'}
@@ -370,7 +433,7 @@ class Task extends React.Component {
             </Button>
           </Card.Footer>
         </Card>
-      </div>
+      </>
     )
   }
 }
@@ -383,7 +446,15 @@ Task.propTypes = {
   deactiveTaskInStore: PropTypes.func.isRequired,
   completeTask: PropTypes.func.isRequired,
   updateTask: PropTypes.func.isRequired,
-  setRunningInStore: PropTypes.func.isRequired
+  setRunningInStore: PropTypes.func.isRequired,
+  filter: PropTypes.string.isRequired
+}
+
+const mapStateToProps = state => {
+  return {
+    filter: state.filter.filter,
+    search: state.filter.search
+  }
 }
 
 const mapDispatchToProps = dispatch => {
@@ -399,6 +470,6 @@ const mapDispatchToProps = dispatch => {
 }
 
 export default connect(
-  null,
+  mapStateToProps,
   mapDispatchToProps
 )(Task)

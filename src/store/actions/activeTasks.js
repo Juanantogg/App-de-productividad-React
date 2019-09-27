@@ -142,6 +142,7 @@ export const reorder = (id, prevIndex, nextIndex, fromContainer, toContainer) =>
 
       if (toContainer === 'tasks') {
         task.active = false
+        task.completed = false
         tasks.splice(nextIndex, 0, task)
         dispatch({ type: 'LIST_TASKS', data: tasks })
       }
