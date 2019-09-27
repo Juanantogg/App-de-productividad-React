@@ -108,7 +108,7 @@ const Header = ({ showModal, createTask, setFilterTasks, setSearch }) => {
               ) : (
                 <>
                   <Link className='nav-link' to='/tasks' onClick={() => setPath('/tasks')}> Inicio </Link>
-                  <Nav.Link onClick={fillTasksList}>Llenar Hstorial</Nav.Link>
+                  {/* <Nav.Link onClick={fillTasksList}>Llenar Hstorial</Nav.Link> */}
                 </>
               )
             }
