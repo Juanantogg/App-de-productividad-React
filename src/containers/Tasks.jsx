@@ -4,6 +4,7 @@ import { connect } from 'react-redux'
 import Task from './Task'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { activeTask, deactiveTask, reorder } from '../store/actions/activeTasks'
+import { Alert } from 'react-bootstrap'
 
 class Tasks extends React.Component {
   onDragEnd (result) {
@@ -22,6 +23,14 @@ class Tasks extends React.Component {
   render () {
     return (
       <div>
+        {
+          this.props.activeTasks.length && (this.props.filter === 'Todas' || this.props.filter === 'Activas' || this.props.filter === '') ? (
+            <Alert className='container text-center mt-1' variant='success'>
+              Tareas activas: <strong>{this.props.activeTasks.length}</strong>
+            </Alert>
+          ) : null
+        }
+
         <DragDropContext onDragEnd={(e) => this.onDragEnd(e)}>
           <Droppable droppableId='activeTasks'>
             {(provided, snapshot) => (
@@ -71,6 +80,14 @@ class Tasks extends React.Component {
               </div>
             )}
           </Droppable>
+
+          {
+            this.props.tasks.length && (this.props.filter === 'Todas' || this.props.filter === 'Inactivas' || this.props.filter === '') ? (
+              <Alert className='container text-center' variant='primary'>
+                Tareas inactivas: <strong>{this.props.tasks.length}</strong>
+              </Alert>
+            ) : null
+          }
 
           {
             (this.props.filter === 'Menos de 30 min' || this.props.filter === 'De 30 min a 1 hr' ||
