@@ -1,4 +1,4 @@
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 
 // Crear tarea en DB
 export const createTask = task => {
